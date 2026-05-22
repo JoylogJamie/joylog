@@ -78,14 +78,40 @@
             options: { plugins: { legend: { display: false } }, scales: { y: { max: 10, beginAtZero: true } } } 
         });
 
-        function setLang(l) {
+       function setLang(l) {
             document.getElementById('btn-ko').className = (l==='ko' ? 'bg-indigo-600 text-white' : 'text-slate-500') + ' px-3 py-1 rounded-full text-[10px] font-bold';
             document.getElementById('btn-en').className = (l==='en' ? 'bg-indigo-600 text-white' : 'text-slate-500') + ' px-3 py-1 rounded-full text-[10px] font-bold';
             document.getElementById('chart-lbl').innerText = (l==='ko' ? '월간 밸런스' : 'Monthly Balance');
             document.getElementById('list-lbl').innerText = (l==='ko' ? '최근의 기록들' : 'Recent Logs');
             document.getElementById('modal-h').innerText = (l==='ko' ? '기록하기' : 'New Entry');
             document.getElementById('guide-h').innerText = (l==='ko' ? '가이드' : 'Guide');
-            document.getElementById('guide-text').innerHTML = (l==='ko') ? "<b>1. 기록 방법:</b> [+] 버튼을 눌러 기록하세요." : "<b>1. How to log:</b> Click [+] button.";
+
+            // 가이드 내용 충실화
+            const guideContent = (l === 'ko') ? `
+                <p><b>1. 기록 방법:</b> [+] 버튼을 눌러 날짜, 활동 내용, 카테고리, 점수(1-10)를 입력하세요.</p>
+                <div class="mt-4 border-t pt-4">
+                    <p><b>2. 카테고리 예시:</b></p>
+                    <ul class="text-xs list-disc pl-4 space-y-1 mt-2">
+                        <li><b>PHY:</b> 운동, 건강식, 충분한 수면</li>
+                        <li><b>EMO:</b> 명상, 일기, 긍정적인 생각</li>
+                        <li><b>SOC:</b> 가족/친구와 대화, 봉사활동</li>
+                        <li><b>INT:</b> 독서, 강의 수강, 새로운 기술 학습</li>
+                        <li><b>ACH:</b> 업무 목표 달성, 과제 완료, 작은 성취</li>
+                    </ul>
+                </div>` : `
+                <p><b>1. How to log:</b> Click [+] to add date, activity, category, and score(1-10).</p>
+                <div class="mt-4 border-t pt-4">
+                    <p><b>2. Categories:</b></p>
+                    <ul class="text-xs list-disc pl-4 space-y-1 mt-2">
+                        <li><b>PHY:</b> Exercise, Healthy meals, Sleep</li>
+                        <li><b>EMO:</b> Meditation, Journaling</li>
+                        <li><b>SOC:</b> Meeting friends, Networking</li>
+                        <li><b>INT:</b> Reading, Learning new skills</li>
+                        <li><b>ACH:</b> Meeting deadlines, Small wins</li>
+                    </ul>
+                </div>`;
+            
+            document.getElementById('guide-text').innerHTML = guideContent;
             render();
         }
 
