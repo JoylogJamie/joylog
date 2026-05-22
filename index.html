@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JoyLog Advanced</title>
+    <title>JoyLog - Dated History</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,10 +23,10 @@
                     <button id="btn-ko" onclick="setLang('ko')" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-bold">KO</button>
                     <button id="btn-en" onclick="setLang('en')" class="text-slate-500 px-3 py-1 rounded-full text-[10px] font-bold">EN</button>
                 </div>
-                <div class="flex gap-1.5">
+                <div class="flex gap-1.5 items-center">
                     <button onclick="resetData()" class="text-[11px] font-bold bg-orange-50 text-orange-400 px-3 py-2 rounded-full border border-orange-100 uppercase">RESET</button>
                     <button onclick="document.getElementById('guideModal').classList.add('active')" class="text-[11px] font-bold bg-slate-200 text-slate-600 px-3 py-2 rounded-full uppercase">GUIDE</button>
-                    <button onclick="document.getElementById('entryModal').classList.add('active')" class="bg-indigo-600 text-white w-10 h-10 rounded-2xl font-bold text-xl">+</button>
+                    <button onclick="document.getElementById('entryModal').classList.add('active')" class="bg-indigo-600 text-white w-10 h-10 rounded-2xl font-bold text-xl shadow-lg">+</button>
                 </div>
             </div>
         </div>
@@ -36,28 +36,97 @@
                 <h3 id="chart-lbl" class="font-bold text-sm">월간 밸런스</h3>
                 <span id="total-lbl" class="text-[10px] text-indigo-400 font-bold">Total 0</span>
             </div>
-            <canvas id="c1" style="height: 180px;"></canvas>
+            <canvas id="c1" height="180"></canvas>
         </div>
         
         <h3 id="list-lbl" class="font-bold mb-4">최근의 기록들</h3>
         <div id="list1" class="space-y-3"></div>
     </div>
 
-    <div id="entryModal" class="modal"><div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">...</div></div>
-    <div id="guideModal" class="modal"><div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">...</div></div>
+    <div id="entryModal" class="modal">
+        <div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
+            <h2 id="modal-h" class="text-xl font-bold mb-6">기록하기</h2>
+            <input type="date" id="in-d" class="w-full bg-slate-100 p-4 rounded-xl mb-3">
+            <input type="text" id="in-a" placeholder="활동 내용" class="w-full bg-slate-100 p-4 rounded-xl mb-3">
+            <select id="in-c" class="w-full bg-slate-100 p-4 rounded-xl mb-3">
+                <option value="0">PHY (신체적 즐거움)</option>
+                <option value="1">EMO (정서적 안정)</option>
+                <option value="2">SOC (사회적 연결)</option>
+                <option value="3">INT (지적 성장)</option>
+                <option value="4">ACH (성취의 기쁨)</option>
+            </select>
+            <input type="number" id="in-s" placeholder="점수 (1-10)" class="w-full bg-slate-100 p-4 rounded-xl mb-4">
+            <button onclick="saveData()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl">저장</button>
+            <button onclick="document.getElementById('entryModal').classList.remove('active')" class="w-full mt-3 text-slate-400">취소</button>
+        </div>
+    </div>
+
+    <div id="guideModal" class="modal">
+        <div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
+            <h2 id="guide-h" class="text-xl font-bold mb-4">가이드 (GUIDE)</h2>
+            <div id="guide-text" class="text-sm text-slate-600 space-y-3"></div>
+            <button onclick="document.getElementById('guideModal').classList.remove('active')" class="w-full mt-6 bg-slate-800 text-white font-bold py-3 rounded-xl">확인</button>
+        </div>
+    </div>
 
     <script>
-        // 초기화 로직: DOM이 완전히 로드된 후 실행되도록 보장
-        document.addEventListener('DOMContentLoaded', () => {
-            window.data = JSON.parse(localStorage.getItem('joyEntries')) || [];
-            window.ctx = document.getElementById('c1').getContext('2d');
-            window.chart = new Chart(window.ctx, { /* ... 기존 차트 옵션 ... */ });
-            render();
+        // 전역 변수 설정
+        let data = JSON.parse(localStorage.getItem('joyEntries')) || [];
+        const ctx = document.getElementById('c1').getContext('2d');
+        const chart = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels: ['PHY','EMO','SOC','INT','ACH'], 
+                datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#4ade80','#a78bfa','#fb923c','#60a5fa','#facc15'], borderRadius: 10 }] 
+            }, 
+            options: { plugins: { legend: { display: false } }, scales: { y: { max: 10, beginAtZero: true } } } 
         });
 
-        // 나머지 함수들도 모두 window 객체에 직접 할당
-        window.saveData = function() { /* ... 로직 ... */ };
-        // ... (이하 나머지 함수)
+        // 기능 함수들
+        function setLang(l) {
+            document.getElementById('btn-ko').className = (l==='ko' ? 'bg-indigo-600 text-white' : 'text-slate-500') + ' px-3 py-1 rounded-full text-[10px] font-bold';
+            document.getElementById('btn-en').className = (l==='en' ? 'bg-indigo-600 text-white' : 'text-slate-500') + ' px-3 py-1 rounded-full text-[10px] font-bold';
+            document.getElementById('chart-lbl').innerText = (l==='ko' ? '월간 밸런스' : 'Monthly Balance');
+            document.getElementById('list-lbl').innerText = (l==='ko' ? '최근의 기록들' : 'Recent Logs');
+            document.getElementById('modal-h').innerText = (l==='ko' ? '기록하기' : 'New Entry');
+            document.getElementById('guide-h').innerText = (l==='ko' ? '가이드' : 'Guide');
+            document.getElementById('guide-text').innerHTML = (l==='ko') ? "<b>1. 기록 방법:</b> [+] 버튼을 눌러 기록하세요.<br><b>2. 카테고리:</b> PHY, EMO, SOC, INT, ACH" : "<b>1. How to log:</b> Click [+] button.<br><b>2. Categories:</b> PHY, EMO, SOC, INT, ACH";
+            render();
+        }
+
+        function saveData() {
+            const d = document.getElementById('in-d').value;
+            const a = document.getElementById('in-a').value;
+            const c = document.getElementById('in-c').value;
+            const s = document.getElementById('in-s').value;
+            if(a && s) {
+                data.push({d, a, c, s});
+                localStorage.setItem('joyEntries', JSON.stringify(data));
+                render();
+                document.getElementById('entryModal').classList.remove('active');
+            }
+        }
+
+        function resetData() { data = []; localStorage.removeItem('joyEntries'); render(); }
+
+        function render() {
+            const list = document.getElementById('list1'); list.innerHTML = '';
+            let stats = [0,0,0,0,0];
+            data.forEach(e => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-4 rounded-2xl border flex justify-between items-center';
+                div.innerHTML = `<div><p class="font-bold text-sm">${e.a}</p><small class="text-[9px] text-slate-400">${e.d}</small></div><p class="font-black text-indigo-600 text-xl">${e.s}</p>`;
+                list.appendChild(div);
+                stats[e.c] += parseInt(e.s);
+            });
+            document.getElementById('total-lbl').innerText = 'Total ' + data.length;
+            chart.data.datasets[0].data = stats;
+            chart.update();
+        }
+
+        // 초기화
+        setLang('ko');
+        render();
     </script>
 </body>
 </html>
