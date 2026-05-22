@@ -2,54 +2,25 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoyLog</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 p-6">
-    <div class="max-w-md mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-black italic">JoyLog <span class="text-xs text-slate-400 font-normal">DATED HISTORY</span></h1>
-            <div class="flex gap-2">
-                <button onclick="resetData()" class="px-4 py-2 bg-orange-50 text-orange-600 rounded-full font-bold text-xs">RESET</button>
-                <button class="px-4 py-2 bg-slate-200 text-slate-600 rounded-full font-bold text-xs">GUIDE</button>
-                <button onclick="addEntry()" class="w-10 h-10 bg-indigo-600 text-white rounded-2xl font-bold text-xl">+</button>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2rem] border shadow-sm mb-8">
-            <div class="flex justify-between mb-4"><span class="font-bold">월간 밸런스</span><span class="text-sm text-slate-400">Total 0</span></div>
-            <canvas id="myChart" height="150"></canvas>
-        </div>
-
-        <h2 class="font-bold mb-4">최근의 기록들</h2>
-        <div id="list" class="space-y-3"></div>
+<body class="p-6 bg-slate-50">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-3xl shadow-lg">
+        <h1 class="text-2xl font-black mb-4">JoyLog</h1>
+        <div id="logs" class="mb-4 text-sm text-gray-600"></div>
+        <button onclick="record()" class="w-full bg-indigo-600 text-white p-3 rounded-xl font-bold">+ 기록하기</button>
     </div>
-
     <script>
-        let db;
-        const request = indexedDB.open("JoyLogDB", 1);
-        request.onupgradeneeded = (e) => { e.target.result.createObjectStore("entries", { autoIncrement: true }); };
-        request.onsuccess = (e) => { db = e.target.result; render(); };
-
-        function addEntry() {
-            const act = prompt("활동명 (PHY, EMO, SOC, INT, ACH 중 하나를 포함해서 입력하세요)");
-            const score = prompt("점수 (1-10)");
-            if(act && score) {
-                db.transaction("entries", "readwrite").objectStore("entries").add({act, score}).oncomplete = render;
+        function record() {
+            const entry = prompt("오늘의 활동과 점수를 입력하세요 (예: PHY-8)");
+            if (entry) {
+                const date = new Date().toLocaleDateString();
+                const log = document.createElement('div');
+                log.innerHTML = `<div>${date}: ${entry}</div>`;
+                document.getElementById('logs').prepend(log);
             }
         }
-
-        function render() {
-            db.transaction("entries", "readonly").objectStore("entries").getAll().onsuccess = (e) => {
-                const list = document.getElementById('list');
-                list.innerHTML = e.target.result.map(r => `<div class="bg-white p-4 rounded-2xl border shadow-sm flex justify-between"><span>${r.act}</span><span class="font-bold text-indigo-600">${r.score}</span></div>`).join('');
-            };
-        }
-
-        function resetData() { if(confirm("초기화할까요?")) { indexedDB.deleteDatabase("JoyLogDB"); location.reload(); } }
-        
-        new Chart(document.getElementById('myChart'), { type: 'bar', data: { labels: ['PHY','EMO','SOC','INT','ACH'], datasets: [{ data: [0,0,0,0,0], backgroundColor: '#4f46e5' }] } });
     </script>
 </body>
 </html>
