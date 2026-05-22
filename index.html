@@ -70,19 +70,14 @@
     </div>
 
     <script>
-        // 전역 변수 설정
         let data = JSON.parse(localStorage.getItem('joyEntries')) || [];
         const ctx = document.getElementById('c1').getContext('2d');
         const chart = new Chart(ctx, { 
             type: 'bar', 
-            data: { 
-                labels: ['PHY','EMO','SOC','INT','ACH'], 
-                datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#4ade80','#a78bfa','#fb923c','#60a5fa','#facc15'], borderRadius: 10 }] 
-            }, 
+            data: { labels: ['PHY','EMO','SOC','INT','ACH'], datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#4ade80','#a78bfa','#fb923c','#60a5fa','#facc15'], borderRadius: 10 }] }, 
             options: { plugins: { legend: { display: false } }, scales: { y: { max: 10, beginAtZero: true } } } 
         });
 
-        // 기능 함수들
         function setLang(l) {
             document.getElementById('btn-ko').className = (l==='ko' ? 'bg-indigo-600 text-white' : 'text-slate-500') + ' px-3 py-1 rounded-full text-[10px] font-bold';
             document.getElementById('btn-en').className = (l==='en' ? 'bg-indigo-600 text-white' : 'text-slate-500') + ' px-3 py-1 rounded-full text-[10px] font-bold';
@@ -90,7 +85,7 @@
             document.getElementById('list-lbl').innerText = (l==='ko' ? '최근의 기록들' : 'Recent Logs');
             document.getElementById('modal-h').innerText = (l==='ko' ? '기록하기' : 'New Entry');
             document.getElementById('guide-h').innerText = (l==='ko' ? '가이드' : 'Guide');
-            document.getElementById('guide-text').innerHTML = (l==='ko') ? "<b>1. 기록 방법:</b> [+] 버튼을 눌러 기록하세요.<br><b>2. 카테고리:</b> PHY, EMO, SOC, INT, ACH" : "<b>1. How to log:</b> Click [+] button.<br><b>2. Categories:</b> PHY, EMO, SOC, INT, ACH";
+            document.getElementById('guide-text').innerHTML = (l==='ko') ? "<b>1. 기록 방법:</b> [+] 버튼을 눌러 기록하세요." : "<b>1. How to log:</b> Click [+] button.";
             render();
         }
 
@@ -107,15 +102,41 @@
             }
         }
 
+        function deleteData(index) {
+            if(confirm('이 기록을 삭제할까요?')) {
+                data.splice(index, 1);
+                localStorage.setItem('joyEntries', JSON.stringify(data));
+                render();
+            }
+        }
+
+        function editData(index) {
+            const item = data[index];
+            const newAct = prompt("활동 내용을 수정하세요:", item.a);
+            const newScore = prompt("점수를 수정하세요 (1-10):", item.s);
+            if(newAct && newScore) {
+                data[index].a = newAct;
+                data[index].s = newScore;
+                localStorage.setItem('joyEntries', JSON.stringify(data));
+                render();
+            }
+        }
+
         function resetData() { data = []; localStorage.removeItem('joyEntries'); render(); }
 
         function render() {
             const list = document.getElementById('list1'); list.innerHTML = '';
             let stats = [0,0,0,0,0];
-            data.forEach(e => {
+            data.forEach((e, index) => {
                 const div = document.createElement('div');
                 div.className = 'bg-white p-4 rounded-2xl border flex justify-between items-center';
-                div.innerHTML = `<div><p class="font-bold text-sm">${e.a}</p><small class="text-[9px] text-slate-400">${e.d}</small></div><p class="font-black text-indigo-600 text-xl">${e.s}</p>`;
+                div.innerHTML = `
+                    <div><p class="font-bold text-sm">${e.a}</p><small class="text-[9px] text-slate-400">${e.d}</small></div>
+                    <div class="flex items-center gap-2">
+                        <p class="font-black text-indigo-600 text-xl">${e.s}</p>
+                        <button onclick="editData(${index})" class="text-[10px] text-gray-400">수정</button>
+                        <button onclick="deleteData(${index})" class="text-[10px] text-red-400">삭제</button>
+                    </div>`;
                 list.appendChild(div);
                 stats[e.c] += parseInt(e.s);
             });
@@ -124,7 +145,6 @@
             chart.update();
         }
 
-        // 초기화
         setLang('ko');
         render();
     </script>
