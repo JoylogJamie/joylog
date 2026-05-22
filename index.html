@@ -2,64 +2,72 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JoyLog</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal.active { display: flex !important; }
+        body { font-family: sans-serif; background: #F8F9FB; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 10px; }
+        button { padding: 12px 20px; border-radius: 15px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-plus { background: #5D5FEF; color: white; }
+        .btn-guide { background: #E9E9EB; color: #555; }
+        .card { background: white; padding: 20px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 350px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
     </style>
 </head>
-<body class="bg-slate-50 p-6">
-    <div class="max-w-md mx-auto">
-        <div class="flex justify-between items-start mb-8">
-            <h1 class="text-3xl font-black italic">JoyLog</h1>
-            <div class="flex gap-2">
-                <button onclick="alert('가이드: + 버튼을 눌러 기록하세요.')" class="bg-gray-200 px-4 py-2 rounded-xl font-bold">GUIDE</button>
-                <button onclick="document.getElementById('entryModal').classList.add('active')" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">+</button>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 style="margin:0; font-size: 24px;">JoyLog</h1>
+                <small style="color: #999;">DATED HISTORY</small>
+            </div>
+            <div class="btn-group">
+                <button class="btn-guide" onclick="showGuide()">GUIDE</button>
+                <button class="btn-plus" onclick="document.getElementById('modal').style.display='flex'">+</button>
             </div>
         </div>
-
-        <div class="bg-white p-6 rounded-3xl shadow-sm mb-6">
-            <canvas id="chart"></canvas>
-        </div>
-        
-        <div id="logs" class="space-y-3"></div>
+        <div id="logList"></div>
     </div>
 
-    <div id="entryModal" class="modal">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-sm m-4">
-            <h2 class="font-bold text-lg mb-4">새 기록</h2>
-            <input type="text" id="act" placeholder="활동 내용" class="w-full p-3 bg-gray-100 rounded-xl mb-2">
-            <input type="number" id="score" placeholder="점수(1-10)" class="w-full p-3 bg-gray-100 rounded-xl mb-4">
-            <button onclick="saveLog()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">저장</button>
-            <button onclick="document.getElementById('entryModal').classList.remove('active')" class="w-full mt-2 text-gray-400">취소</button>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0;">새 기록 추가</h3>
+            <input type="text" id="act" placeholder="활동 내용 (예: 독서)">
+            <select id="cat">
+                <option value="PHY">PHY (신체)</option><option value="EMO">EMO (정서)</option>
+                <option value="SOC">SOC (사회)</option><option value="INT">INT (지적)</option>
+                <option value="ACH">ACH (성취)</option>
+            </select>
+            <input type="number" id="score" placeholder="점수 (1-10)">
+            <button onclick="save()" style="width:100%; background:#5D5FEF; color:white; margin-top:10px;">저장하기</button>
+            <button onclick="document.getElementById('modal').style.display='none'" style="width:100%; background:none; color:#999; margin-top:10px;">취소</button>
         </div>
     </div>
 
     <script>
-        function saveLog() {
+        function showGuide() { alert("JoyLog 사용법: + 버튼을 눌러 활동과 점수를 기록하세요. 기록은 브라우저에 자동 저장됩니다."); }
+        function save() {
             const act = document.getElementById('act').value;
+            const cat = document.getElementById('cat').value;
             const score = document.getElementById('score').value;
-            if(!act || !score) return alert('내용과 점수를 입력하세요.');
+            if(!act || !score) return alert('모든 항목을 입력해주세요.');
             
             let data = JSON.parse(localStorage.getItem('joylogs') || '[]');
-            data.push({act, score, date: new Date().toLocaleDateString()});
+            data.push({act, cat, score, date: new Date().toLocaleDateString()});
             localStorage.setItem('joylogs', JSON.stringify(data));
-            
-            document.getElementById('entryModal').classList.remove('active');
-            renderLogs();
+            document.getElementById('modal').style.display = 'none';
+            render();
         }
-
-        function renderLogs() {
+        function render() {
             const data = JSON.parse(localStorage.getItem('joylogs') || '[]');
-            document.getElementById('logs').innerHTML = data.map(item => 
-                `<div class="bg-white p-4 rounded-xl shadow-sm">${item.date} | ${item.act} (${item.score}점)</div>`
+            document.getElementById('logList').innerHTML = data.reverse().map(i => 
+                `<div class="card"><strong>${i.cat}</strong> | ${i.act} <br> <small style="color:#888;">${i.date} / ${i.score}점</small></div>`
             ).join('');
         }
-        
-        renderLogs();
+        render();
     </script>
 </body>
 </html>
